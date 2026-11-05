@@ -167,3 +167,13 @@ O sistema de arquivos da Vercel é efêmero: SQLite **não** persiste edições.
 - Exportação XLSX e upload de documentos (propostas em PDF) ficam para fase posterior; referências a arquivos são texto.
 - Testado em Chromium emulando iPhone 390×844 com toque. **Não testado em Safari/WebKit real** neste ambiente — validar no aparelho.
 - `node:sqlite` emite aviso “experimental” no Node 22 (funcional e estável para este uso).
+
+## 8. Versão de teste no claude.ai (somente leitura)
+
+`artifact/` contém uma versão de página única da interface, para testar navegação sem servidor. Ela reaproveita `lib/finance.ts` e recebe uma cópia dos dados importados.
+
+```bash
+npx tsx artifact/build.ts --out /caminho/FORA/do/repositorio/arto-teste.html
+```
+
+O HTML gerado contém dados internos (o script recusa gravá-lo dentro do repositório). Publicado como página privada no claude.ai; não compartilhar. Tem seletor Admin/Cliente para testar as duas visões; edição, contratos, reimportação e login com senha existem só na versão servidor.
