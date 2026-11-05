@@ -1,0 +1,29 @@
+# Blueprint Render (opcional). Disco persistente exige plano pago — só aplique com autorização.
+# Hashes de senha: gere localmente com `npm run hash-password -- "senha"` e cole no painel (sync: false).
+services:
+  - type: web
+    name: arto-obras
+    runtime: docker
+    plan: starter
+    region: oregon
+    healthCheckPath: /api/health
+    autoDeploy: false
+    disk:
+      name: arto-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD_HASH
+        sync: false
+      - key: CLIENT_USERNAME
+        value: cliente
+      - key: CLIENT_PASSWORD_HASH
+        sync: false
+      - key: DATABASE_PATH
+        value: /data/arto.db
+      - key: COOKIE_SECURE
+        value: "1"

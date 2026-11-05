@@ -1,0 +1,12 @@
+.git
+node_modules
+.next
+data
+*.xlsx
+*.db
+.env
+.env.*
+!.env.example
+tests/e2e/.tmp
+test-results
+playwright-report

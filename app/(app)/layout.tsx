@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { headers } from 'next/headers'
 import { BottomNav, HistoryTracker } from '@/components/nav'
 import { getContext } from '@/lib/data'
 import { defaultDbPath } from '@/lib/db'
@@ -7,6 +9,8 @@ export const dynamic = 'force-dynamic'
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getContext()
   const isAdmin = ctx.session.r === 'admin'
+  const path = (await headers()).get('x-arto-path') ?? ''
+  const allowWithoutData = isAdmin && path === '/importar'
   return (
     <>
       <HistoryTracker />
@@ -21,12 +25,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </div>
       <main className="mx-auto max-w-3xl px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom))]">
-        {ctx.missing ? (
+        {ctx.missing && !allowWithoutData ? (
           <div className="card p-5">
             <h1 className="text-xl font-semibold">Dados ainda não importados</h1>
             <p className="mt-2 text-[15px] text-muted">
-              O banco local não foi encontrado em <code className="text-[13px]">{defaultDbPath()}</code>. Rode <code>npm run import</code> com a planilha V4 em <code>data/private/</code>.
+              O banco local não foi encontrado em <code className="text-[13px] break-all">{defaultDbPath()}</code>. Rode <code>npm run import</code> com a planilha V4 em <code>data/private/</code>
+              {isAdmin ? ' ou envie a planilha pelo app.' : '. Avise o administrador.'}
             </p>
+            {isAdmin && (
+              <Link href="/importar" className="btn btn-primary mt-4">
+                Importar planilha
+              </Link>
+            )}
           </div>
         ) : (
           children

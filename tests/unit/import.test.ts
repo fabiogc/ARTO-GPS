@@ -128,6 +128,20 @@ describe('importação idempotente (planilha sintética)', () => {
     expect(s.inScopeItems).toBe(4) // 06.001 e 06.003 são alternativas excludentes
   })
 
+  it('simulação (dry-run) informa mudanças sem alterar o banco', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'arto-'))
+    const file = join(dir, 'v4.xlsx')
+    await buildWorkbook(file)
+    const { db } = await importFile(file, join(dir, 'a.db'))
+    const before = dump(db)
+    const runs = (db.prepare('SELECT COUNT(*) AS n FROM import_runs').get() as { n: number }).n
+    await buildWorkbook(file, { price0101: 4321 })
+    const r = applyImport(db, normalizeV4(await parseV4(file)), { dryRun: true })
+    expect(r.sync!.items.updated).toBe(1)
+    expect(dump(db)).toEqual(before)
+    expect((db.prepare('SELECT COUNT(*) AS n FROM import_runs').get() as { n: number }).n).toBe(runs)
+  })
+
   it('edição manual sobrevive à reimportação e mudança na planilha gera conflito', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'arto-'))
     const file = join(dir, 'v4.xlsx')

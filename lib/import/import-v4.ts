@@ -444,13 +444,19 @@ const ENTITY_TABLE: Record<string, [string, string]> = { item: ['items', 'code']
 const keyOf = (row: Row, cols: string[]) => cols.map((c) => String(row[c])).join('\u0001')
 const same = (a: Row, b: Row, cols: string[]) => cols.every((c) => (a[c] ?? null) === (b[c] ?? null))
 
-export function applyImport(db: DatabaseSync, n: Normalized, opts: { resolution?: Resolution; actor?: string; now?: string } = {}): ImportReport {
+class DryRunRollback extends Error {}
+
+/**
+ * Aplica a importação. Com `dryRun`, executa tudo dentro da transação e desfaz no fim:
+ * o relatório (sync/conflicts) mostra exatamente o que mudaria, sem alterar o banco.
+ */
+export function applyImport(db: DatabaseSync, n: Normalized, opts: { resolution?: Resolution; actor?: string; now?: string; dryRun?: boolean } = {}): ImportReport {
   const resolution = opts.resolution ?? 'ask'
   const now = opts.now ?? new Date().toISOString()
   const sync: NonNullable<ImportReport['sync']> = {}
   const conflicts: NonNullable<ImportReport['conflicts']> = []
 
-  tx(db, () => {
+  runImport(db, () => {
     // 1. Remoções (ordem inversa): linhas importadas que sumiram da planilha
     for (const table of [...ORDER].reverse()) {
       const cols = KEYS[table]
@@ -517,8 +523,17 @@ export function applyImport(db: DatabaseSync, n: Normalized, opts: { resolution?
     n.report.sync = sync
     n.report.conflicts = conflicts
     db.prepare('INSERT INTO import_runs (at, file, sha256, summary, report) VALUES (?,?,?,?,?)').run(now, n.report.source.file, n.report.source.sha256, JSON.stringify(sync), JSON.stringify(n.report))
+    if (opts.dryRun) throw new DryRunRollback()
   })
   return n.report
+}
+
+function runImport(db: DatabaseSync, fn: () => void) {
+  try {
+    tx(db, fn)
+  } catch (e) {
+    if (!(e instanceof DryRunRollback)) throw e
+  }
 }
 
 export function reportToMarkdown(r: ImportReport): string {

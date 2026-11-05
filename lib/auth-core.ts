@@ -83,7 +83,7 @@ export function authenticate(username: string, password: string): { user: string
 }
 
 /** Rotas que o papel "cliente" não pode acessar (propostas, fornecedores e dados internos). */
-export const ADMIN_ONLY_PREFIXES = ['/propostas', '/relatorio', '/planilha', '/api/export', '/acompanhamento']
+export const ADMIN_ONLY_PREFIXES = ['/propostas', '/relatorio', '/planilha', '/api/export', '/acompanhamento', '/importar']
 
 export function isAdminOnly(pathname: string): boolean {
   return ADMIN_ONLY_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))

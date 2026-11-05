@@ -15,7 +15,10 @@ export function proxy(req: NextRequest) {
     if (pathname.startsWith('/api/')) return NextResponse.json({ error: 'acesso negado' }, { status: 403 })
     return NextResponse.redirect(new URL('/?negado=1', req.url))
   }
-  return NextResponse.next()
+  // Informa o caminho ao layout (ex.: liberar /importar quando ainda não há banco)
+  const headers = new Headers(req.headers)
+  headers.set('x-arto-path', pathname)
+  return NextResponse.next({ request: { headers } })
 }
 
 export const config = {

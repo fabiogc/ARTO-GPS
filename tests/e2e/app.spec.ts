@@ -272,3 +272,20 @@ test('admin: exportação CSV e JSON', async ({ page }) => {
   const json = await (await page.request.get('/api/export?formato=json')).json()
   expect(json.dataset.items).toHaveLength(197)
 })
+
+test('admin: reimportação pelo app simula antes de aplicar', async ({ page }) => {
+  await login(page)
+  await page.goto('/mais')
+  await page.getByTestId('more-importar').tap()
+  await expect(page.getByTestId('upload-form')).toBeVisible()
+  // Arquivo inválido é recusado
+  await page.getByTestId('upload-input').setInputFiles({ name: 'falso.xlsx', mimeType: 'application/octet-stream', buffer: Buffer.from('não é planilha') })
+  await page.getByTestId('upload-submit').tap()
+  await expect(page.getByTestId('flash')).toContainText('não é uma planilha')
+  // Mesma V4 já importada → simulação sem mudanças, botão desabilitado
+  await page.getByTestId('upload-input').setInputFiles(process.env.V4_XLSX_PATH || 'data/private/ARTO_Caico_Orcamento_V4_Quantificacao_Integral.xlsx')
+  await page.getByTestId('upload-submit').tap()
+  await expect(page.getByTestId('import-preview')).toContainText('197')
+  await expect(page.getByTestId('no-changes')).toBeVisible()
+  await expect(page.getByTestId('apply-submit')).toBeDisabled()
+})

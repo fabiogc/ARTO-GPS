@@ -1,0 +1,30 @@
+# Publicação em VPS própria: app + Caddy (HTTPS automático via Let's Encrypt).
+#   1. cp .env.example .env.production  → preencha SESSION_SECRET, hashes e ARTO_DOMAIN
+#   2. docker compose up -d --build
+#   3. Envie a planilha pelo app (Mais › Importar) ou: docker compose cp planilha.xlsx app:/data/planilha-v4.xlsx && docker compose restart app
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      DATABASE_PATH: /data/arto.db
+      COOKIE_SECURE: "1"
+    volumes:
+      - arto-data:/data
+    expose:
+      - "3000"
+  caddy:
+    image: caddy:2.8.4
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file: .env.production
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+volumes:
+  arto-data:
+  caddy-data:

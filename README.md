@@ -91,6 +91,7 @@ Navegação inferior: **Visão geral | Custos | Curva ABC | Propostas (admin) ou
 
 - *Visão geral*: KPIs (custo conhecido, contratado, pago, pacotes sem preço), banner de cobertura, camadas A/B/C, cenário ativo, indicadores com/sem equipamentos.
 - *Custos*: 22 macroetapas com subtotal, nº de itens, sem valor, % do conhecido, barras proporcionais; ordenação por etapa/valor e filtros; drill-down macroetapa › pacote › detalhe (fonte, data-base, confiabilidade, status, propostas, contrato, linha original da planilha, histórico, edição).
+- *Importar planilha* (admin): upload da nova versão → simulação do que muda (inserções, alterações, remoções, conflitos com edições do app) → confirmação.
 - *Curva ABC*, *Propostas* (filtros por status, detalhe, concorrentes, motivo de exclusão, mudança de status, registro de contrato), *Busca global*, *Pendências*, *Estimado × contratado × realizado* (com lançamento de medições), *Cenários e referências*, *Cronograma*, *Relatório*, *Planilha original*, *Exportação CSV/JSON*.
 - Formulários são HTML nativos com *server actions* (funcionam mesmo se o JavaScript falhar no Safari). Filtros são links (`?filtro=`), então **voltar/recarregar/compartilhar** preservam o estado. O botão “Voltar” usa o histórico real quando existe e um destino lógico quando a página foi aberta direto.
 
@@ -100,9 +101,9 @@ Navegação inferior: **Visão geral | Custos | Curva ABC | Propostas (admin) ou
 
 ```bash
 npm run typecheck
-npm test                 # Vitest: 33 testes (finanças, ABC, cenários, null×0, propostas concorrentes, importação idempotente, conflitos, auth)
+npm test                 # Vitest: 34 testes (finanças, ABC, cenários, null×0, propostas concorrentes, importação idempotente, conflitos, auth)
 npm run build
-npm run test:e2e         # Playwright 390×844 (toque): 12 cenários; banco e credenciais próprios em tests/e2e/.tmp
+npm run test:e2e         # Playwright 390×844 (toque): 13 cenários; banco e credenciais próprios em tests/e2e/.tmp
 npm run test:all         # tudo acima em sequência
 ```
 
@@ -111,22 +112,50 @@ npm run test:all         # tudo acima em sequência
 
 ---
 
-## 6. Publicação segura (Fase 5 — ainda não executada)
+## 6. Publicação segura (Fase 5 — preparada, **não executada**)
 
-**Nada foi publicado.** Antes de qualquer deploy:
+Nada foi publicado. Os artefatos abaixo foram construídos e testados localmente (imagem Docker, compose, Caddy).
 
-1. **Torne o repositório GitHub privado** (hoje está público). Mesmo sem dados, ele expõe a estrutura do orçamento.
-2. **Nunca envie a planilha ou o banco pelo git.** Envie o `.xlsx` diretamente ao servidor (scp / upload) e rode `npm run import` lá.
-3. Gere segredos novos no servidor (`npm run setup` ou variáveis do provedor). Use senhas fortes e diferentes para admin e cliente. Defina `COOKIE_SECURE=1`.
-4. Sirva **somente via HTTPS**. Cabeçalhos já configurados: `X-Frame-Options: DENY`, `nosniff`, `noindex`. `robots.txt` bloqueia indexação.
+### Antes de qualquer deploy
 
-**Opção recomendada para o MVP (persistência com SQLite):** um container/VM com **volume persistente** (ex.: Render, Railway, Fly.io ou VPS) executando `npm ci && npm run build && npm run start`, com `DATABASE_PATH` apontando para o volume. Faça backup do arquivo `.db` (ou use *Mais › Backup JSON*).
+1. **Torne o repositório GitHub privado** (hoje está público). Ele não contém dados, mas expõe a estrutura do orçamento.
+2. **A planilha e o banco nunca passam pelo git.** Envie a V4 pelo próprio app (*Mais › Importar*) ou copie para o volume `/data` do servidor.
+3. Gere segredos **novos** para produção: `SESSION_SECRET` (≥ 32 caracteres aleatórios) e hashes com `npm run hash-password -- "senha"` (senhas fortes e diferentes para admin e cliente).
+4. Somente **HTTPS** (`COOKIE_SECURE=1`, padrão da imagem). Cabeçalhos já configurados: `X-Frame-Options: DENY`, `nosniff`, `noindex`, HSTS no Caddy.
 
-**Vercel:** o sistema de arquivos é somente leitura/efêmero — SQLite não persiste edições. Para Vercel, a evolução prevista é **Supabase Postgres + Auth + RLS** (trocar `lib/repo.ts` por um repositório Postgres com o mesmo modelo; políticas RLS por papel). Isso requer credenciais e autorização explícita do responsável. Não use “Vercel + banco embutido no deploy” com dados reais.
+### Opção A — VPS própria (recomendada: mais barata, dados sob seu controle)
 
-Checklist pós-deploy: abrir `/api/health` (`{"ok":true,"db":true,"auth":true}`), confirmar que `/custos` sem login redireciona para `/login`, que o cliente recebe 403 em `/api/export`, e testar no Safari do iPhone.
+```bash
+git clone <repo privado> && cd ARTO-GPS
+cp .env.example .env.production     # SESSION_SECRET, ADMIN_PASSWORD_HASH, CLIENT_PASSWORD_HASH, ARTO_DOMAIN
+docker compose up -d --build        # app + Caddy com certificado Let's Encrypt automático
+```
 
----
+Aponte o DNS de `ARTO_DOMAIN` para a VPS antes. Depois entre como admin e envie a planilha em *Mais › Importar* (o app simula o impacto antes de aplicar). Backup: copie o volume `arto-data` (arquivo `arto.db`) ou use *Mais › Backup JSON*.
+
+### Opção B — Render (blueprint `render.yaml`)
+
+Serviço Docker com disco persistente em `/data` (**plano pago** — só com sua autorização). Cole os hashes de senha no painel; `SESSION_SECRET` é gerado pelo Render.
+
+### Opção C — Vercel
+
+O sistema de arquivos da Vercel é efêmero: SQLite **não** persiste edições. Para Vercel, migrar `lib/repo.ts` para **Supabase Postgres + Auth + RLS** (mesmo modelo de dados). Requer credenciais e autorização explícita.
+
+### Imagem Docker
+
+- `docker build -t arto-obras .` → Node 22 slim, usuário sem privilégios, `umask 077`, volume `/data`, `HEALTHCHECK` em `/api/health`.
+- O container **recusa iniciar** sem `SESSION_SECRET` e `ADMIN_PASSWORD_HASH`.
+- Primeira execução: se não houver banco e existir `/data/planilha-v4.xlsx`, importa automaticamente; reinícios não reimportam.
+
+### Checklist pós-deploy
+
+- `https://<domínio>/api/health` → `{"ok":true,"db":true,"auth":true}`
+- `/custos` sem login → redireciona para `/login`; cliente recebe 403 em `/api/export`
+- Login admin e cliente no **Safari do iPhone**; adicionar à tela inicial e testar navegação/voltar.
+
+### CI
+
+`.github/workflows/ci.yml` roda typecheck, testes unitários (planilha sintética) e build a cada push. Os E2E dependem da V4 privada e rodam localmente (`npm run test:e2e`).
 
 ## 7. Limitações conhecidas
 

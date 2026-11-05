@@ -28,13 +28,28 @@ import type {
 let cached: { path: string; db: DatabaseSync } | null = null
 
 export function dbAvailable(path = defaultDbPath()): boolean {
-  return existsSync(path)
+  if (!existsSync(path)) return false
+  try {
+    const db = path === defaultDbPath() ? getOrCreateDb() : openDb(path)
+    const r = db.prepare('SELECT COUNT(*) AS n FROM import_runs').get() as { n: number }
+    return Number(r.n) > 0
+  } catch {
+    return false
+  }
 }
 
 export function getDb(): DatabaseSync {
   const path = defaultDbPath()
   if (cached?.path === path) return cached.db
   if (!existsSync(path)) throw new DataNotImportedError(path)
+  cached = { path, db: openDb(path) }
+  return cached.db
+}
+
+/** Abre o banco, criando-o (vazio, com esquema) se ainda não existir — usado só pela importação. */
+export function getOrCreateDb(): DatabaseSync {
+  const path = defaultDbPath()
+  if (cached?.path === path) return cached.db
   cached = { path, db: openDb(path) }
   return cached.db
 }

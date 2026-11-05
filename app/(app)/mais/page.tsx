@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { CalendarDays, ChevronRight, Download, FileSearch, Layers, LogOut, Scale, Search, Sheet, TriangleAlert } from 'lucide-react'
+import { CalendarDays, ChevronRight, Download, FileSearch, FileUp, Layers, LogOut, Scale, Search, Sheet, TriangleAlert } from 'lucide-react'
 import { logoutAction } from '@/app/actions'
 import { PageHeader, Section } from '@/components/ui'
 import { getReadyContext } from '@/lib/data'
@@ -16,6 +16,7 @@ export default async function Mais() {
     { href: '/cenarios', label: 'Cenários e referências', hint: 'Alternativas estruturais, pesquisa V2, base física', icon: Layers, admin: false },
     { href: '/cronograma', label: 'Cronograma de marcos', hint: `${ds.milestones.length} marcos`, icon: CalendarDays, admin: false },
     { href: '/relatorio', label: 'Relatório de importação e cobertura', hint: 'Divergências, fontes, alertas, conflitos', icon: FileSearch, admin: true },
+    { href: '/importar', label: 'Importar nova versão da planilha', hint: 'Simula o impacto antes de aplicar', icon: FileUp, admin: true },
     { href: '/planilha', label: 'Planilha original (somente leitura)', hint: '17 abas preservadas linha a linha', icon: Sheet, admin: true },
   ].filter((l) => isAdmin || !l.admin)
 

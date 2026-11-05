@@ -1,0 +1,9 @@
+# ARTO_DOMAIN vem de .env.production (ex.: obras.seudominio.com.br)
+{$ARTO_DOMAIN} {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	reverse_proxy app:3000
+}

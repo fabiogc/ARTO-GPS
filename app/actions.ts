@@ -165,3 +165,44 @@ export async function resolveConflictAction(formData: FormData) {
   revalidatePath('/', 'layout')
   back('/relatorio', { ok: 'Conflito resolvido.' })
 }
+
+// ---------------------------------------------------------------------------
+// Reimportação da planilha pelo app (admin)
+// ---------------------------------------------------------------------------
+
+const cleanName = (n: string) => n.replace(/[^\p{L}\p{N}._ -]/gu, '_').slice(0, 120)
+
+export async function uploadWorkbookAction(formData: FormData) {
+  await requireAdmin()
+  const file = formData.get('file')
+  if (!(file instanceof File) || file.size === 0) back('/importar', { erro: 'Selecione a planilha .xlsx.' })
+  const f = file as File
+  let sha = ''
+  try {
+    const { storeUpload } = await import('@/lib/import/service')
+    sha = storeUpload(Buffer.from(await f.arrayBuffer()), f.name)
+  } catch (e) {
+    back('/importar', { erro: (e as Error).message })
+  }
+  redirect(`/importar?arquivo=${sha}&nome=${encodeURIComponent(cleanName(f.name))}`)
+}
+
+export async function applyWorkbookAction(formData: FormData) {
+  const s = await requireAdmin()
+  const sha = str(formData, 'arquivo') ?? ''
+  const name = cleanName(str(formData, 'nome') ?? 'planilha.xlsx')
+  const r = str(formData, 'resolucao')
+  const resolution = r === 'keep-manual' || r === 'accept-import' ? r : 'ask'
+  if (formData.get('confirm') !== 'on') back(`/importar?arquivo=${sha}&nome=${encodeURIComponent(name)}`, { erro: 'Confirme a importação.' })
+  let msg = ''
+  try {
+    const { commitImport } = await import('@/lib/import/service')
+    const rep = await commitImport(sha, resolution, s.u, name)
+    const t = Object.values(rep.sync ?? {}).reduce((a, x) => ({ i: a.i + x.inserted, u: a.u + x.updated, d: a.d + x.removed }), { i: 0, u: 0, d: 0 })
+    msg = `Importação aplicada: ${t.i} inseridas, ${t.u} atualizadas, ${t.d} removidas${rep.conflicts?.length ? ` · ${rep.conflicts.length} conflito(s)` : ''}.`
+  } catch (e) {
+    back(`/importar?arquivo=${sha}&nome=${encodeURIComponent(name)}`, { erro: (e as Error).message })
+  }
+  revalidatePath('/', 'layout')
+  back('/relatorio', { ok: msg })
+}

@@ -11,7 +11,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  serverExternalPackages: ['exceljs'],
+  serverExternalPackages: ['exceljs', 'jszip'],
+  // Upload da planilha V4 pelo app (limite do arquivo: 10 MB + margem do multipart)
+  experimental: { serverActions: { bodySizeLimit: '11mb' } },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },
