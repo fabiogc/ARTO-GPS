@@ -52,6 +52,7 @@ export function quote(id: string, itemCodes: string[], amount: number | null, ov
     isVerbal: false,
     isOptional: false,
     isReference: false,
+    isInternal: false,
     durationDays: null,
     validity: null,
     documentRef: null,

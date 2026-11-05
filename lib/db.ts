@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS quotes (
   id TEXT PRIMARY KEY, package_raw TEXT, supplier_id TEXT REFERENCES suppliers(id), service TEXT,
   received_at TEXT, amount REAL, amount_kind TEXT NOT NULL, unit_label TEXT, includes_taxes TEXT, freight REAL,
   status TEXT NOT NULL, status_raw TEXT, is_verbal INTEGER NOT NULL DEFAULT 0, is_optional INTEGER NOT NULL DEFAULT 0,
-  is_reference INTEGER NOT NULL DEFAULT 0, duration_days REAL, validity TEXT, document_ref TEXT, scope TEXT,
+  is_reference INTEGER NOT NULL DEFAULT 0, is_internal INTEGER NOT NULL DEFAULT 0, duration_days REAL, validity TEXT, document_ref TEXT, scope TEXT,
   responsible TEXT, next_action TEXT, follow_up TEXT, notes TEXT, link_status TEXT NOT NULL, link_note TEXT,
   origin TEXT NOT NULL DEFAULT 'planilha', sheet_row INTEGER
 );
@@ -101,9 +101,19 @@ export function openDb(path = defaultDbPath(), opts: { readOnly?: boolean } = {}
   if (!opts.readOnly) {
     db.exec('PRAGMA journal_mode = WAL;')
     db.exec(SCHEMA)
+    migrate(db)
   }
   return db
 }
+
+/** Migrações aditivas para bancos criados por versões anteriores. */
+function migrate(db: DatabaseSync) {
+  const cols = (db.prepare('PRAGMA table_info(quotes)').all() as Array<{ name: string }>).map((c) => c.name)
+  if (!cols.includes('is_internal')) db.exec('ALTER TABLE quotes ADD COLUMN is_internal INTEGER NOT NULL DEFAULT 0')
+}
+
+/** Colunas 0/1 tratadas como booleanas nas edições manuais. */
+export const BOOLEAN_COLUMNS = new Set(['is_reference', 'is_internal'])
 
 export function tx<T>(db: DatabaseSync, fn: () => T): T {
   db.exec('BEGIN IMMEDIATE')

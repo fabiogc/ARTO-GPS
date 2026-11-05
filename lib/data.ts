@@ -2,13 +2,16 @@ import 'server-only'
 import { cache } from 'react'
 import { activeScenarioId, buildCostUnits, categorySummaries, summarize, type CalcOptions } from './finance'
 import { dbAvailable, loadDataset } from './repo'
+import { clientView } from './visibility'
 import { requireSession } from './session'
 
 /** Carrega dados + cálculos uma vez por requisição. */
 export const getContext = cache(async () => {
   const session = await requireSession()
   if (!dbAvailable()) return { session, missing: true as const }
-  const ds = loadDataset()
+  const full = loadDataset()
+  // Cliente nunca recebe propostas internas nem textos que as citem (filtrado no servidor)
+  const ds = session.r === 'admin' ? full : clientView(full)
   const opts: CalcOptions = { activeScenario: activeScenarioId(ds), includeMedicalEquipment: true }
   const units = buildCostUnits(ds, opts)
   const summary = summarize(ds, opts, units)

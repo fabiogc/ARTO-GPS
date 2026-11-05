@@ -92,6 +92,8 @@ export interface Quote {
   isVerbal: boolean
   isOptional: boolean
   isReference: boolean
+  /** Proposta interna da ARTO (ex.: gerenciamento de obra): base de escopo, nunca orçamento; invisível ao cliente. */
+  isInternal: boolean
   durationDays: number | null
   validity: string | null
   documentRef: string | null

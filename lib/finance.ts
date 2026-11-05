@@ -58,6 +58,7 @@ export function isInScope(item: Pick<Item, 'scenario'>, active: StructuralScenar
 /** Proposta pode representar o custo de um pacote? */
 export function isQuoteComparable(q: Quote): boolean {
   return (
+    !q.isInternal &&
     q.amountKind === 'global' &&
     q.amount !== null &&
     !q.isOptional &&
@@ -68,6 +69,7 @@ export function isQuoteComparable(q: Quote): boolean {
 }
 
 export function quoteExclusionReason(q: Quote): string | null {
+  if (q.isInternal) return 'Interna ARTO — base de escopo, fora do orçamento'
   if (q.amount === null) return 'Sem valor informado'
   if (q.status === 'descartada') return 'Proposta descartada'
   if (q.isOptional || q.amountKind === 'opcional') return 'Opcional — não somado'

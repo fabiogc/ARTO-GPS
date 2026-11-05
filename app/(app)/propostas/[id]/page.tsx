@@ -43,6 +43,7 @@ export default async function PropostaPage({ params, searchParams }: { params: P
           <Badge>{QUOTE_STATUS_LABEL[q.status]}</Badge>
           {q.statusRaw && q.statusRaw !== QUOTE_STATUS_LABEL[q.status] && <Badge tone="neutral">Planilha: {q.statusRaw}</Badge>}
           {q.isVerbal && <Badge tone="warn">Informado verbalmente</Badge>}
+          {q.isInternal && <Badge tone="accent">Interna ARTO · cliente não vê</Badge>}
           {usedInEstimate && <Badge tone="accent">Usada na estimativa atual</Badge>}
           {isQuoteComparable(q) && !usedInEstimate && <Badge tone="neutral">Comparável, não escolhida</Badge>}
         </div>
@@ -134,6 +135,12 @@ export default async function PropostaPage({ params, searchParams }: { params: P
           <label className="tap flex items-center gap-3">
             <input type="checkbox" name="isReference" defaultChecked={q.isReference} className="h-5 w-5 accent-[#0e5a61]" />
             <span className="text-[14.5px]">Usar como proposta de referência do pacote</span>
+          </label>
+          <label className="tap flex items-start gap-3">
+            <input type="checkbox" name="isInternal" defaultChecked={q.isInternal} className="mt-0.5 h-5 w-5 accent-[#0e5a61]" data-testid="quote-internal" />
+            <span className="text-[14.5px]">
+              Proposta interna ARTO (base de escopo) — fora do orçamento e invisível ao cliente
+            </span>
           </label>
           <label className="block">
             <span className="mb-1 block text-[13px] font-medium">Notas</span>

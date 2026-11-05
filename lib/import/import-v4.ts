@@ -5,7 +5,7 @@
  * se a planilha mudar um campo editado manualmente, gera-se um conflito para decisão explícita.
  */
 import type { DatabaseSync } from 'node:sqlite'
-import { tx, type Row } from '../db'
+import { BOOLEAN_COLUMNS, tx, type Row } from '../db'
 import { EDITABLE } from '../editable'
 import type { AmountKind, LinkStatus, QuoteStatus, Scenario } from '../types'
 import { type Issue, type ParsedV4, SHEETS, mapPriceType } from './parse-v4'
@@ -16,6 +16,7 @@ import {
   inferCostKind,
   inferMultiPackages,
   inferScenario,
+  isInternalScopeQuote,
   norm,
   normalizeQuoteStatus,
   parseScenarioLabel,
@@ -203,13 +204,14 @@ export function normalizeV4(p: ParsedV4, legacy: Legacy = null): Normalized {
     if (linkStatus === 'sem_item' || linkStatus === 'divergente') quotesWithoutItem.push({ id: q.id, packageRaw: pkg, reason: linkNote ?? '' })
     const isOptional = amountKind === 'opcional'
     const isVerbal = detectVerbal([q.statusRaw, q.service, q.documentRef, q.scope])
-    const comparable = amountKind === 'global' && !isOptional && status !== 'descartada' && (linkStatus === 'ok' || linkStatus === 'inferido') && codes.length > 0
+    const isInternal = isInternalScopeQuote(q.service, codes.map((c) => itemsByCode.get(c)!))
+    const comparable = !isInternal && amountKind === 'global' && !isOptional && status !== 'descartada' && (linkStatus === 'ok' || linkStatus === 'inferido') && codes.length > 0
     if (comparable) codes.forEach((c) => comparableCoverage.add(c))
     else
       quotesNotSummed.push({
         id: q.id,
         reason:
-          q.amount === null ? 'sem valor' : isOptional ? 'opcional' : amountKind === 'unitario' ? `tarifa ${unitLabel}` : amountKind === 'mensal' ? 'valor mensal' : linkStatus === 'divergente' ? 'vínculo divergente' : 'sem pacote',
+          isInternal ? 'interna ARTO (escopo de gerenciamento, fora do orçamento)' : q.amount === null ? 'sem valor' : isOptional ? 'opcional' : amountKind === 'unitario' ? `tarifa ${unitLabel}` : amountKind === 'mensal' ? 'valor mensal' : linkStatus === 'divergente' ? 'vínculo divergente' : 'sem pacote',
       })
     quoteRows.push({
       id: q.id,
@@ -227,6 +229,7 @@ export function normalizeV4(p: ParsedV4, legacy: Legacy = null): Normalized {
       is_verbal: isVerbal ? 1 : 0,
       is_optional: isOptional ? 1 : 0,
       is_reference: q.id.startsWith('REF-') ? 1 : 0,
+      is_internal: isInternal ? 1 : 0,
       duration_days: q.durationDays,
       validity: q.validity,
       document_ref: q.documentRef,
@@ -503,7 +506,7 @@ export function applyImport(db: DatabaseSync, n: Normalized, opts: { resolution?
       const col = EDITABLE[String(o.entity_type)]?.[String(o.field)]
       if (!table || !col) continue
       const imported = db.prepare(`SELECT ${col} AS v FROM ${table} WHERE ${keyCol} = ?`).get(o.entity_key) as { v: string | number | null } | undefined
-      const newImport = JSON.stringify(imported?.v ?? null)
+      const newImport = JSON.stringify(BOOLEAN_COLUMNS.has(col) ? Number(imported?.v) === 1 : imported?.v ?? null)
       if (newImport === o.base_value) continue
       const entry = { entity: String(o.entity_type), key: String(o.entity_key), field: String(o.field), manual: o.value as string | null, previousImport: o.base_value as string | null, newImport, action: '' }
       if (resolution === 'accept-import') {

@@ -246,6 +246,24 @@ test('pendências: abas e filtros de risco', async ({ page }) => {
   await expect(page).toHaveURL(/limite=/)
 })
 
+test('cliente não vê propostas internas de gerenciamento de obra', async ({ page }) => {
+  await login(page)
+  await page.goto('/propostas')
+  const internal = page.getByTestId('quote-list').locator('li', { hasText: 'Interna ARTO' })
+  await expect(internal.first()).toBeVisible()
+  await expect(internal.first()).toContainText('fora do orçamento')
+  const supplier = (await internal.first().locator('span').first().textContent())!.trim().split(' ')[0]
+  await page.goto('/mais')
+  await page.getByTestId('logout').tap()
+  await login(page, E2E.client, E2E.clientPw)
+  await page.goto(`/busca?q=${encodeURIComponent(supplier)}`)
+  await expect(page.getByTestId('empty-state')).toBeVisible()
+  await page.goto('/itens/03.001')
+  await expect(page.locator('main')).not.toContainText(supplier)
+  await page.goto('/pendencias')
+  await expect(page.getByTestId('pendencias-list')).not.toContainText('Gerenciamento')
+})
+
 test('cliente: visão resumida sem propostas nem exportação', async ({ page }) => {
   await login(page, E2E.client, E2E.clientPw)
   await expect(page.getByTestId('role-badge')).toHaveText('Visão do cliente')

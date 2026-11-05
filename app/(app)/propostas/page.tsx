@@ -19,8 +19,8 @@ export default async function Propostas({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageHeader title="Propostas" subtitle={`${ds.quotes.length} registradas · ${ds.quotes.filter(isQuoteComparable).length} com valor global comparável`} />
-      <Banner tone="neutral">Propostas não se somam entre si nem ao orçamento. Só viram “contratado” com contrato registrado explicitamente.</Banner>
+      <PageHeader title="Propostas" subtitle={`${ds.quotes.length} registradas · ${ds.quotes.filter(isQuoteComparable).length} com valor global comparável · ${ds.quotes.filter((q) => q.isInternal).length} internas ARTO`} />
+      <Banner tone="neutral">Propostas não se somam entre si nem ao orçamento. Só viram “contratado” com contrato registrado explicitamente. Propostas internas ARTO (gerenciamento de obra) servem de base de escopo e não aparecem para o cliente.</Banner>
       <div className="mt-4">
         <Chips
           label="Filtrar por status"
@@ -52,6 +52,7 @@ export default async function Propostas({ searchParams }: { searchParams: Promis
                   </div>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     <Badge>{QUOTE_STATUS_LABEL[q.status]}</Badge>
+                    {q.isInternal && <Badge tone="accent">Interna ARTO · cliente não vê</Badge>}
                     {q.isVerbal && <Badge tone="warn">Informado verbalmente</Badge>}
                     {q.linkStatus === 'inferido' && <Badge tone="neutral">Vínculo inferido</Badge>}
                     {reason && <Badge tone="gap">{reason}</Badge>}

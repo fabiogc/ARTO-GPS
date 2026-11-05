@@ -3,7 +3,7 @@
  */
 import { existsSync } from 'node:fs'
 import type { DatabaseSync } from 'node:sqlite'
-import { defaultDbPath, openDb, tx, type Row } from './db'
+import { BOOLEAN_COLUMNS, defaultDbPath, openDb, tx, type Row } from './db'
 import { EDITABLE } from './editable'
 import type {
   AuditEntry,
@@ -161,6 +161,7 @@ export function loadDataset(db: DatabaseSync = getDb()): Dataset {
         isVerbal: Number(r.is_verbal) === 1,
         isOptional: Number(r.is_optional) === 1,
         isReference: Number(r.is_reference) === 1,
+        isInternal: Number(r.is_internal) === 1,
         durationDays: n(r.duration_days),
         validity: s(r.validity),
         documentRef: s(r.document_ref),
@@ -310,7 +311,7 @@ export function setOverrides(entity: 'item' | 'quote', key: string, changes: Rec
     for (const [field, value] of Object.entries(changes)) {
       const col = EDITABLE[entity][field]
       if (!col) throw new Error(`Campo não editável: ${field}`)
-      const importedValue = col === 'is_reference' ? Number(imported[col]) === 1 : imported[col] ?? null
+      const importedValue = BOOLEAN_COLUMNS.has(col) ? Number(imported[col]) === 1 : imported[col] ?? null
       const old = (current as unknown as Record<string, unknown>)[field] ?? null
       if (JSON.stringify(old) === JSON.stringify(value ?? null)) continue
       if (JSON.stringify(importedValue) === JSON.stringify(value ?? null)) {

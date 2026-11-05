@@ -105,7 +105,7 @@ export async function updateQuoteAction(formData: FormData) {
     const ds = loadDataset()
     if (!ds.contracts.some((c) => c.quoteId === id)) back(path, { erro: 'Para marcar como contratada, registre o contrato abaixo (valor e data). O contratado só entra com contrato explícito.' })
   }
-  const n = setOverrides('quote', id, { status, isReference: formData.get('isReference') === 'on', notes: str(formData, 'notes') }, s.u)
+  const n = setOverrides('quote', id, { status, isReference: formData.get('isReference') === 'on', isInternal: formData.get('isInternal') === 'on', notes: str(formData, 'notes') }, s.u)
   revalidatePath('/', 'layout')
   back(path, { ok: n ? 'Proposta atualizada.' : 'Nenhuma alteração.' })
 }

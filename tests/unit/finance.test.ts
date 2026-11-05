@@ -11,6 +11,7 @@ import {
   summarize,
   tracking,
 } from '@/lib/finance'
+import { clientView } from '@/lib/visibility'
 import { contract, dataset, item, measurement, quote } from './fixtures'
 
 const NONE = { activeScenario: null, includeMedicalEquipment: true } as const
@@ -174,5 +175,30 @@ describe('curva ABC', () => {
     expect(cats.rows.map((r) => [r.key, r.value])).toEqual([['19', 90], ['01', 10]])
     const ref = abcFromUnits(units, ds.categories, 'itens', 'referencia')
     expect(ref.rows.map((r) => r.key)).toEqual(['01.001'])
+  })
+})
+
+describe('propostas internas ARTO (gerenciamento de obra)', () => {
+  it('nunca entram no orçamento, mesmo com valor global', () => {
+    const ds = dataset({ items: [item('03.001')], quotes: [quote('G', ['03.001'], 50000, { isInternal: true })] })
+    expect(isQuoteComparable(ds.quotes[0])).toBe(false)
+    expect(summarize(ds, NONE).estimateTotal).toBeNull()
+  })
+  it('visão do cliente remove a proposta e textos que citam o fornecedor', () => {
+    const ds = dataset({
+      items: [item('03.001', { source: 'Gerenciadora Alfa: valor mensal verbal', notes: 'ok' }), item('01.001', { source: 'Projeto base' })],
+      quotes: [quote('G', ['03.001'], 1, { isInternal: true, supplier: 'Gerenciadora Alfa Ltda' }), quote('P', ['01.001'], 2)],
+      pendencias: [
+        { id: 'g', title: 'Gerenciamento', info: '', document: null, statusRaw: '', groups: ['03'], sheetRow: 1 },
+        { id: 'f', title: 'Fundações', info: '', document: null, statusRaw: '', groups: ['05'], sheetRow: 2 },
+      ],
+    })
+    const c = clientView(ds)
+    expect(c.quotes.map((q) => q.id)).toEqual(['P'])
+    expect(c.items[0].source).toBeNull()
+    expect(c.items[0].notes).toBe('ok')
+    expect(c.items[1].source).toBe('Projeto base')
+    expect(c.pendencias.map((p) => p.id)).toEqual(['f'])
+    expect(ds.quotes).toHaveLength(2) // original intacto
   })
 })

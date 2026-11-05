@@ -175,3 +175,12 @@ export const CATEGORY_RISK: Record<string, 'alto' | 'medio' | 'baixo'> = {
   '02': 'medio', '04': 'medio', '07': 'medio', '08': 'medio', '09': 'medio', '11': 'medio', '15': 'medio', '17': 'medio', '18': 'medio', '20': 'medio', '21': 'medio',
   '01': 'baixo', '03': 'baixo', '22': 'baixo',
 }
+
+/**
+ * Propostas de GERENCIAMENTO DE OBRA (macroetapa 03) embasam o escopo/honorário da ARTO:
+ * não compõem o orçamento do cliente e ficam invisíveis na visão cliente. Ajustável no app.
+ */
+export function isInternalScopeQuote(service: string, items: Array<{ group: string; description: string }>): boolean {
+  const s = norm(service)
+  return items.some((i) => i.group === '03' && /gerenciament/.test(norm(i.description))) || (/gerenciament/.test(s) && items.every((i) => i.group === '03'))
+}

@@ -189,6 +189,9 @@ describe.skipIf(!existsSync(REAL))('planilha V4 real (local, não versionada)', 
     expect(s.contractedTotal).toBeNull()
     expect(s.paidTotal).toBeNull()
     expect(s.excludedByScenario).toBe(10)
+    // Gerenciamento de obra = propostas internas ARTO
+    expect(ds.quotes.filter((q) => q.isInternal).every((q) => q.itemCodes.every((c) => c.startsWith('03.')))).toBe(true)
+    expect(ds.quotes.filter((q) => q.isInternal).length).toBeGreaterThan(0)
     // Tarifas, valores mensais, opcionais e vínculos divergentes nunca compõem a estimativa
     const chosen = new Set(buildCostUnits(ds).map((u) => u.chosenQuote?.id).filter(Boolean))
     for (const q of ds.quotes.filter((x) => x.amountKind !== 'global' || x.linkStatus === 'divergente')) expect(chosen.has(q.id)).toBe(false)

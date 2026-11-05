@@ -118,6 +118,7 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         <Badge>{QUOTE_STATUS_LABEL[q.status]}</Badge>
                         {q.isVerbal && <Badge tone="warn">Informado verbalmente</Badge>}
+                        {q.isInternal && <Badge tone="accent">Interna ARTO</Badge>}
                         {chosen && <Badge tone="accent">Usada na estimativa</Badge>}
                         {reason && <Badge tone="gap">{reason}</Badge>}
                       </div>
