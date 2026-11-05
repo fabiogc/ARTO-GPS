@@ -1,0 +1,110 @@
+@import 'tailwindcss';
+
+/* Identidade ARTO: sóbria, fundo claro, alto contraste. Um único acento; lacunas em cinza neutro. */
+@theme {
+  --color-paper: #f6f5f2;
+  --color-surface: #ffffff;
+  --color-ink: #15212b;
+  --color-ink-2: #3b4855;
+  --color-muted: #5f6b76;
+  --color-line: #e3e1dc;
+  --color-line-strong: #cfccc5;
+  --color-accent: #0e5a61;
+  --color-accent-2: #3c8b91;
+  --color-accent-3: #9cc6c9;
+  --color-accent-soft: #e5f0f0;
+  --color-gap: #8a9097;
+  --color-gap-soft: #eeedea;
+  --color-warn: #8a5a00;
+  --color-warn-soft: #fbf3e2;
+  --color-danger: #9b2c2c;
+  --color-danger-soft: #fbeaea;
+  --color-ok: #2f6b3a;
+  --color-ok-soft: #e8f3ea;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-feature-settings: 'tnum' 1;
+    -webkit-tap-highlight-color: transparent;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* evita zoom automático no iOS */
+  }
+}
+
+@layer components {
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 16px;
+  }
+  .tap {
+    min-height: 44px;
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .gap-pattern {
+    background-image: repeating-linear-gradient(135deg, var(--color-gap-soft) 0 6px, #e2e0dc 6px 8px);
+  }
+  .field {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    background: #fff;
+    padding: 8px 12px;
+    color: var(--color-ink);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .btn-primary {
+    background: var(--color-accent);
+    color: #fff;
+  }
+  .btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    border: 1px solid var(--color-line-strong);
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #ecebe7 25%, #f4f3f0 37%, #ecebe7 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 10px;
+}
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}

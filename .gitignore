@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+coverage/
+next-env.d.ts
+*.tsbuildinfo
+# Dados sensíveis (planilha, banco, relatórios) — NUNCA versionar
+data/private/
+data/*.db
+data/*.db-*
+*.xlsx
+# Segredos
+.env
+.env.*
+!.env.example
+# Testes
+test-results/
+playwright-report/
+tests/e2e/.tmp/

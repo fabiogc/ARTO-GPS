@@ -1,0 +1,46 @@
+{
+  "name": "arto-gestao-obras",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ARTO | Gerenciamento de Obras Hospitalares — MVP",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "setup": "tsx scripts/setup-env.ts",
+    "import": "tsx scripts/import-v4.ts",
+    "hash-password": "tsx scripts/hash-password.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:all": "npm run typecheck && npm test && npm run build && npm run test:e2e",
+    "e2e:server": "tsx scripts/import-v4.ts --fresh --db tests/e2e/.tmp/e2e.db && next start -p 3200"
+  },
+  "dependencies": {
+    "exceljs": "4.4.0",
+    "jszip": "3.10.2",
+    "lucide-react": "1.69.0",
+    "next": "16.4.5",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "recharts": "3.10.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/postcss": "4.3.4",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "tailwindcss": "4.3.4",
+    "tsx": "4.23.15",
+    "typescript": "~5.9.3",
+    "vitest": "5.1.0"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
+  }
+}
